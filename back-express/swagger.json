@@ -1,0 +1,31 @@
+{
+    "swagger": "2.0",
+    "info": {
+      "version": "1.0.0",
+      "title": "Monorepo API",
+      "description": "API documentation for the monorepo backend"
+    },
+    "host": "localhost:3000",
+    "basePath": "/",
+    "paths": {
+      "/api/hello-world": {
+        "get": {
+          "summary": "Hello World endpoint",
+          "description": "Returns a Hello World message",
+          "responses": {
+            "200": {
+              "description": "Successful response",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }

@@ -1,5 +1,11 @@
 const tursoClient = require('../../config/turso');
 const hubspotService = require('../../services/hubspotService');
+const rateLimit = require('express-rate-limit');
+
+const formLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    max: 100 // límite de 100 solicitudes por ventana
+});
 
 const guardarFormulario = async (req, res) => {
     try {

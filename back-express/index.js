@@ -6,15 +6,19 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('./swagger.json');
 const helloWorldRoutes = require('./modules/hello-world/helloWorldRoutes');
 const formularioRoutes = require('./modules/lead-form/leadFormRoutes');
+const config = require('./config/config');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-// Middlewares
-app.use(cors({
-  origin: ['http://localhost:4321', 'http://localhost:3000'],
-  credentials: true
-}));
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: config.rateLimit.windowMs,
+  max: config.rateLimit.max
+});
+
+app.use(limiter);
+app.use(cors(config.cors));
 app.use(express.json());
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -25,11 +29,10 @@ app.get('/', (req, res) => {
 });
 
 // Rutas
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use('/api/hello-world', helloWorldRoutes);
 app.use('/api/formulario', formularioRoutes);
 
 // Servidor
-app.listen(PORT, () => {
-  console.log(`Backend running at http://localhost:${PORT}`);
+app.listen(config.port, () => {
+  console.log(`Server running in ${config.nodeEnv} mode on port ${config.port}`);
 });

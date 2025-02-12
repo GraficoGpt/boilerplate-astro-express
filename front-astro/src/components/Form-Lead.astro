@@ -1,3 +1,7 @@
+---
+const API_URL = import.meta.env.PUBLIC_API_URL;
+---
+
 <div class="form-container">
   <form id="contact-form" method="POST">
     <div class="form-item">
@@ -135,62 +139,108 @@
   </form>
 </div>
 
-<script>
-  const form = document.getElementById("contact-form") as HTMLFormElement;
-  if (!form) {
-    throw new Error("Element #contact-form not found");
-  }
+<script define:vars={{ API_URL }}>
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.querySelector("#contact-form");
 
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
+    // Función para mostrar notificaciones
+    const showNotification = (message, type) => {
+      const notification = document.createElement("div");
+      notification.className = `notification ${type}`;
+      notification.style.position = "fixed";
+      notification.style.top = "20px";
+      notification.style.right = "20px";
+      notification.style.padding = "15px";
+      notification.style.borderRadius = "4px";
+      notification.style.zIndex = "1000";
+      notification.style.backgroundColor =
+        type === "success" ? "#4caf50" : "#f44336";
+      notification.style.color = "white";
+      notification.textContent = message;
 
-    // Agregar clase al formulario para activar validaciones visuales
-    form.classList.add("was-validated");
+      document.body.appendChild(notification);
+      setTimeout(() => notification.remove(), 5000);
+    };
 
-    if (!form.checkValidity()) {
-      return;
-    }
+    // Función para validar el formulario
+    const validateForm = (formData) => {
+      const email = formData.get("email");
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    const formData = new FormData(form);
-    const formDataObject = Object.fromEntries(formData.entries()) as Record<
-      string,
-      string | boolean
-    >;
+      if (!emailRegex.test(email)) {
+        throw new Error("Formato de email inválido");
+      }
 
-    // Convertir el checkbox de términos a booleano
-    formDataObject.terminos = formDataObject.terminos === "on";
+      const telefono = formData.get("telefono");
+      const telefonoRegex = /^\d{10}$/;
 
-    try {
-      const response = await fetch("http://localhost:3000/api/formulario", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formDataObject),
-      });
+      if (!telefonoRegex.test(telefono)) {
+        throw new Error("El teléfono debe tener 10 dígitos");
+      }
 
-      if (response.ok) {
-        alert("¡Formulario enviado exitosamente!");
+      const cedula = formData.get("cedula");
+      if (!/^\d{8,12}$/.test(cedula)) {
+        throw new Error("Cédula inválida");
+      }
+    };
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      // Agregar clase para activar validación visual
+      form.classList.add("was-validated");
+
+      try {
+        const formData = new FormData(form);
+
+        // Validar datos antes de enviar
+        validateForm(formData);
+
+        const formJson = Object.fromEntries(formData);
+
+        const response = await fetch(`${API_URL}/api/formulario`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formJson),
+        });
+
+        if (!response.ok) {
+          throw new Error("Error en el servidor");
+        }
+
+        const data = await response.json();
+
+        // Mostrar mensaje de éxito
+        showNotification("¡Formulario enviado exitosamente!", "success");
+
+        // Limpiar formulario
         form.reset();
         form.classList.remove("was-validated");
-      } else {
-        const errorData = await response.json();
-        if (response.status === 400) {
-          alert(
-            `Error en el formulario: ${errorData.error}\nCampos faltantes: ${errorData.campos.join(", ")}`
-          );
-        } else {
-          alert(
-            "Error al enviar el formulario. Por favor, intente nuevamente."
-          );
-        }
+      } catch (error) {
+        console.error("Error:", error);
+        showNotification(
+          error.message ||
+            "Error al enviar el formulario. Por favor, intente nuevamente.",
+          "error"
+        );
       }
-    } catch (error) {
-      console.error("Error:", error);
-      alert(
-        "Error de conexión. Por favor, verifica tu conexión a internet e intenta nuevamente."
-      );
-    }
+    });
+
+    // Validación en tiempo real
+    const inputs = form.querySelectorAll("input, select");
+    inputs.forEach((input) => {
+      input.addEventListener("input", () => {
+        if (input.checkValidity()) {
+          input.classList.remove("is-invalid");
+          input.classList.add("is-valid");
+        } else {
+          input.classList.remove("is-valid");
+          input.classList.add("is-invalid");
+        }
+      });
+    });
   });
 </script>
 
@@ -323,5 +373,31 @@
   .was-validated .form-item input:invalid,
   .was-validated .form-item select:invalid {
     border-color: #dc3545;
+  }
+
+  /* Estilos para inputs válidos/inválidos */
+  .is-valid {
+    border-color: #198754 !important;
+  }
+
+  .is-invalid {
+    border-color: #dc3545 !important;
+  }
+
+  /* Estilos para notificaciones */
+  .notification {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    animation: slideIn 0.3s ease-out;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
   }
 </style>

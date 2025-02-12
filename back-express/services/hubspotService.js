@@ -1,12 +1,28 @@
 const { Client } = require('@hubspot/api-client');
-const hubspotConfig = require('../config/hubspot');
+const config = require('../config/config');
 
 class HubspotService {
   constructor() {
-    this.hubspotClient = new Client({ accessToken: hubspotConfig.apiKey });
+    this.hubspotClient = new Client({ accessToken: config.hubspot.apiKey });
+    this.apiKey = config.hubspot.apiKey;
+    this.portalId = config.hubspot.portalId;
+  }
+
+  validateLeadData(leadData) {
+    const requiredFields = ['email', 'nombres', 'apellidos', 'telefono', 'cedula'];
+    for (const field of requiredFields) {
+      if (!leadData[field]) {
+        throw new Error(`Campo requerido faltante: ${field}`);
+      }
+    }
+    // Validar formato de email
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(leadData.email)) {
+      throw new Error('Formato de email inválido');
+    }
   }
 
   async sendLead(leadData) {
+    this.validateLeadData(leadData);
     try {
       // Primero buscamos si existe un contacto con la misma cédula
       const existingContact = await this.searchContactByCedula(leadData.cedula);
@@ -38,10 +54,10 @@ class HubspotService {
       }
 
       // Si necesitas asociar el contacto con un formulario específico
-      if (hubspotConfig.formId) {
+      if (config.hubspot.formId) {
         await this.hubspotClient.forms.submitForm({
-          formId: hubspotConfig.formId,
-          portalId: hubspotConfig.portalId,
+          formId: config.hubspot.formId,
+          portalId: config.hubspot.portalId,
           fields: [
             { name: 'email', value: leadData.email },
             { name: 'firstname', value: leadData.nombres },

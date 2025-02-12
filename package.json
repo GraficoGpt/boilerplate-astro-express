@@ -1,0 +1,13 @@
+{
+  "name": "monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"cd back-express && npm run dev\" \"cd front-astro && npm run dev\"",
+    "install:all": "concurrently \"cd back-express && npm install\" \"cd front-astro && npm install\"",
+    "install:deps": "npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

@@ -8,5 +8,9 @@ export default defineConfig({
   adapter: node({
     mode: 'standalone', // Usa el modo standalone para Railway
   }),
+  server: {
+    host: '0.0.0.0',
+    port: process.env.PORT || 4321
+  }
 });
 

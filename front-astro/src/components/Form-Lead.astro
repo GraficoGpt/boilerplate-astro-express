@@ -152,17 +152,44 @@
     }
 
     const formData = new FormData(form);
-    const response = await fetch("/api/contact", {
-      method: "POST",
-      body: formData,
-    });
+    const formDataObject = Object.fromEntries(formData.entries()) as Record<
+      string,
+      string | boolean
+    >;
 
-    if (response.ok) {
-      alert("Message sent successfully!");
-      form.reset();
-      form.classList.remove("was-validated"); // Remover clase al enviar exitosamente
-    } else {
-      alert("Failed to send message.");
+    // Convertir el checkbox de términos a booleano
+    formDataObject.terminos = formDataObject.terminos === "on";
+
+    try {
+      const response = await fetch("http://localhost:3000/api/formulario", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formDataObject),
+      });
+
+      if (response.ok) {
+        alert("¡Formulario enviado exitosamente!");
+        form.reset();
+        form.classList.remove("was-validated");
+      } else {
+        const errorData = await response.json();
+        if (response.status === 400) {
+          alert(
+            `Error en el formulario: ${errorData.error}\nCampos faltantes: ${errorData.campos.join(", ")}`
+          );
+        } else {
+          alert(
+            "Error al enviar el formulario. Por favor, intente nuevamente."
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert(
+        "Error de conexión. Por favor, verifica tu conexión a internet e intenta nuevamente."
+      );
     }
   });
 </script>
